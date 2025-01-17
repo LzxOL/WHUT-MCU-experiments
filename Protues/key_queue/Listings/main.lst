@@ -1,0 +1,232 @@
+C51 COMPILER V9.57.0.0   MAIN                                                              11/10/2024 14:55:32 PAGE 1   
+
+
+C51 COMPILER V9.57.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: E:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          #include <INTRINS.H>
+   3          unsigned char code KeyNum[16] = {0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90, 0x88, 0x83, 0
+             -xc6, 0xa1, 0x86, 0x8e};
+   4          // 0到9、及A到F对应的数码管编码
+   5          // 矩阵键盘对应行：
+   6          unsigned char position[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
+   7          
+   8          sbit KeyRow1 = P1 ^ 7;
+   9          sbit KeyRow2 = P1 ^ 6;
+  10          sbit KeyRow3 = P1 ^ 5;
+  11          sbit KeyRow4 = P1 ^ 4;
+  12          
+  13          void delay_ms(unsigned int time);
+  14          void test001(void);
+  15          void test002(void);
+  16          void display_digit(int position, int digit);
+  17          int queue_record=0;
+  18          int key_num;
+  19          int num_record[8]=0;
+  20          int i;
+  21          int show;
+  22          
+  23          void key_scan(void);
+  24          void main()
+  25          {
+  26   1                      key_num=0;
+  27   1          while (1)
+  28   1          {
+  29   2              key_scan();
+  30   2                              display_digit(1,key_num);
+  31   2                      for(show=0;show<queue_record;show++){
+  32   3                              
+  33   3                                              display_digit(show,num_record[show]);
+  34   3                      }
+  35   2      
+  36   2      
+  37   2          }
+  38   1      }
+  39          
+  40          void delay_ms(unsigned int time)
+  41          {
+  42   1          unsigned int i, j;
+  43   1          for (i = 0; i < time; i++)
+  44   1          {
+  45   2              for (j = 0; j < 123; j++)
+  46   2              {
+  47   3                  // 12MHZ执行一个语句123次大约为1ms
+  48   3                  // 空循环，用于产生延时
+  49   3              }
+  50   2          }
+  51   1      }
+  52          
+  53          void key_scan(void){
+C51 COMPILER V9.57.0.0   MAIN                                                              11/10/2024 14:55:32 PAGE 2   
+
+  54   1              //key_num=0;
+  55   1              //数码管显示不需要进行按键消抖，检测到对应电平对最终结果无影响
+  56   1              P1=0xf0;
+  57   1              if(queue_record>8)
+  58   1                              queue_record=0;
+  59   1              if((P1&0xf0)!=0xf0)//若p1端口的高四位不全为1，即有按键按下
+  60   1              {
+  61   2                      P1=0xfe;//设置 P1 为 1111 1110，准备进行键盘扫描
+  62   2                      for(i=0;i<4;i++)
+  63   2                      {
+  64   3                              P1=_cror_(0xf7,i);//循环右移，扫描下一列
+  65   3                              if(KeyRow1==0)
+  66   3                              {       
+  67   4                                      delay_ms(100);
+  68   4                                      if(KeyRow1==0){
+  69   5                                              key_num=i;
+  70   5                                              num_record[queue_record++]=i;
+  71   5                                      }
+  72   4                              }
+  73   3                              if(KeyRow2==0)
+  74   3                              {
+  75   4                                      delay_ms(100);
+  76   4                                      if(KeyRow2==0){
+  77   5                                              key_num=i+4;
+  78   5                                              num_record[queue_record++]=i+4;
+  79   5                                      }
+  80   4                              }
+  81   3                              if(KeyRow3==0)
+  82   3                              {
+  83   4                                      delay_ms(100);
+  84   4                                              if(KeyRow3==0){
+  85   5                                              key_num=i+8;
+  86   5                                              num_record[queue_record++]=i+8;
+  87   5                                              }
+  88   4                              }
+  89   3                              if(KeyRow4==0)
+  90   3                              {
+  91   4                                      delay_ms(100);
+  92   4                                      if(KeyRow4==0){
+  93   5                                              key_num=i+8;
+  94   5                                      num_record[queue_record++]=i+12;
+  95   5                                      }
+  96   4                              }
+  97   3                      }
+  98   2              }
+  99   1              
+ 100   1      }
+ 101          // {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
+ 102          //{0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90, 0x88, 0x83, 0xc6, 0xa1, 0x86, 0x8e};
+ 103          void test001(void){
+ 104   1              //显示位置1
+ 105   1                                      P2 = 0x01;
+ 106   1                    P3_7 = 1;
+ 107   1              P3_7 = 0;
+ 108   1              //显示数字1
+ 109   1                                      P2 =0xc0;
+ 110   1                                      P3_6 = 1;
+ 111   1                                      P3_6 = 0;
+ 112   1              delay_ms(2);
+ 113   1              //显示位置2
+ 114   1                                      P2 = 0x02;
+ 115   1                    P3_7 = 1;
+C51 COMPILER V9.57.0.0   MAIN                                                              11/10/2024 14:55:32 PAGE 3   
+
+ 116   1              P3_7 = 0;
+ 117   1              //显示数字2
+ 118   1                                      P2 =0xf9;
+ 119   1                                      P3_6 = 1;
+ 120   1                                      P3_6 = 0;
+ 121   1              delay_ms(2);
+ 122   1              //显示位置3
+ 123   1                                      P2 = 0x04;
+ 124   1                    P3_7 = 1;
+ 125   1              P3_7 = 0;
+ 126   1              //显示数字3
+ 127   1                                      P2 =0xa4;
+ 128   1                                      P3_6 = 1;
+ 129   1                                      P3_6 = 0;
+ 130   1              delay_ms(2);
+ 131   1                      //显示位置4
+ 132   1                                      P2 = 0x08;
+ 133   1                    P3_7 = 1;
+ 134   1              P3_7 = 0;
+ 135   1              //显示数字4
+ 136   1                                      P2 =0xb0;
+ 137   1                                      P3_6 = 1;
+ 138   1                                      P3_6 = 0;
+ 139   1              delay_ms(2);
+ 140   1                              //显示位置5
+ 141   1                                      P2 = 0x10;
+ 142   1                    P3_7 = 1;
+ 143   1              P3_7 = 0;
+ 144   1              //显示数字5
+ 145   1                                      P2 =0x99;
+ 146   1                                      P3_6 = 1;
+ 147   1                                      P3_6 = 0;
+ 148   1              delay_ms(2);
+ 149   1                              //显示位置6
+ 150   1                                      P2 = 0x20;
+ 151   1                    P3_7 = 1;
+ 152   1              P3_7 = 0;
+ 153   1              //显示数字6
+ 154   1                                      P2 =0x92;
+ 155   1                                      P3_6 = 1;
+ 156   1                                      P3_6 = 0;
+ 157   1              delay_ms(2);
+ 158   1                              //显示位置7
+ 159   1                                      P2 = 0x40;
+ 160   1                    P3_7 = 1;
+ 161   1              P3_7 = 0;
+ 162   1              //显示数字7
+ 163   1                                      P2 =0x82;
+ 164   1                                      P3_6 = 1;
+ 165   1                                      P3_6 = 0;
+ 166   1              delay_ms(2);
+ 167   1                              //显示位置8
+ 168   1                                      P2 = 0x80;
+ 169   1                    P3_7 = 1;
+ 170   1              P3_7 = 0;
+ 171   1              //显示数字8
+ 172   1                                      P2 =0xf8;
+ 173   1                                      P3_6 = 1;
+ 174   1                                      P3_6 = 0;
+ 175   1              delay_ms(2);
+ 176   1      }
+ 177          void display_digit(int position, int digit) {
+C51 COMPILER V9.57.0.0   MAIN                                                              11/10/2024 14:55:32 PAGE 4   
+
+ 178   1          // 定义数码管位置对应的端口值
+ 179   1          unsigned char position_codes[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
+ 180   1          // 定义数字对应的段码值
+ 181   1          unsigned char digit_codes[16] = {0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90, 0x88, 0x8
+             -3, 0xc6, 0xa1, 0x86, 0x8e};
+ 182   1      
+ 183   1          // 检查输入的有效性
+ 184   1          if (position < 1 || position > 8 || digit < 0 || digit > 15) {
+ 185   2              return; // 如果输入无效，则直接返回
+ 186   2          }
+ 187   1      
+ 188   1          // 设置数码管的位置
+ 189   1          P2 = position_codes[position - 1];
+ 190   1          P3_7 = 1;
+ 191   1          P3_7 = 0;
+ 192   1      
+ 193   1          // 设置要显示的数字
+ 194   1          P2 = digit_codes[digit];
+ 195   1          P3_6 = 1;
+ 196   1          P3_6 = 0;
+ 197   1      
+ 198   1          // 延时以保持显示稳定
+ 199   1          delay_ms(2);
+ 200   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    604    ----
+   CONSTANT SIZE    =     40    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     32      28
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
